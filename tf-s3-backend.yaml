@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Creates an S3 bucket and DynamoDB table to use as a Terraform S3 backend.
+
+Parameters:
+  StateBucketName:
+    Description: Name of S3 bucket used to store Terraform State files.
+    Type: String
+  LockTableName:
+    Description: Name of the DynamoDB table used for Terraform state locking.
+    Type: String
+  KMSMasterKeyID:
+    Description: ARN of the KMS key to use for default encryption (use default value for AWS managerd key).
+    Type: String
+    Default: AWS managed key
+
+Conditions:
+  UseAWSManagedKey: !Equals [ !Ref KMSMasterKeyID, 'AWS managed key' ]
+
+Resources:
+  StateBucket:
+    Type: "AWS::S3::Bucket"
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      BucketName: !Ref StateBucketName
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !If [ UseAWSManagedKey, !Ref AWS::NoValue, !Ref KMSMasterKeyID]
+      VersioningConfiguration:
+        Status: Enabled
+
+  LockTable:
+    Type: "AWS::DynamoDB::Table"
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TableName: !Ref LockTableName
+      AttributeDefinitions:
+        - AttributeName: LockID
+          AttributeType: S
+      KeySchema:
+        - AttributeName: LockID
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+
+Outputs:
+  S3BucketName:
+    Value: !Ref StateBucket
+    Description: S3 bucket name
+  DynamoDBTableName:
+    Value: !Ref LockTable
+    Description: DynamoDB table name
