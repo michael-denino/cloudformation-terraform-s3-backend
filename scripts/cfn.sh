@@ -14,7 +14,7 @@ PROJECT=$3
 # Stack-level tags are applied to all supported resources in the CloudFormation stack
 aws cloudformation $COMMAND \
 --stack-name $ENVIRONMENT-$PROJECT-terraform-backend \
---template-body file://../terraform-s3-backend.yaml \
+--template-body file://../tf-s3-backend.yaml \
 --parameters ParameterKey=StateBucketName,ParameterValue=$ENVIRONMENT-$PROJECT-terraform-backend \
              ParameterKey=LockTableName,ParameterValue=$ENVIRONMENT-$PROJECT-terraform-backend \
 --tags Key=Name,Value=$ENVIRONMENT-$PROJECT-terraform-backend \

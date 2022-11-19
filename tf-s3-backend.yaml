@@ -14,7 +14,7 @@ Parameters:
     Default: AWS managed key
 
 Conditions:
-  UseAWSManagedKey: !Equals [ !Ref KMSMasterKeyID, 'AWS managed key' ]
+  UseAWSManagedKey: !Equals [ !Ref KMSMasterKeyID, AWS managed key ]
 
 Resources:
   StateBucket:
@@ -33,7 +33,7 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: aws:kms
-              KMSMasterKeyID: !If [ UseAWSManagedKey, !Ref AWS::NoValue, !Ref KMSMasterKeyID]
+              KMSMasterKeyID: !If [ UseAWSManagedKey, !Ref AWS::NoValue, !Ref KMSMasterKeyID ]
       VersioningConfiguration:
         Status: Enabled
 
