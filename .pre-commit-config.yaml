@@ -6,7 +6,6 @@ repos:
       args:
         - --markdown-linebreak-ext=md
     - id: end-of-file-fixer
-    - id: check-yaml
     - id: check-json
     - id: check-added-large-files
 
@@ -22,3 +21,13 @@ repos:
       - id: terraform_tflint
         args:
           - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+
+  - repo: https://github.com/aws-cloudformation/cfn-lint
+    rev: v0.71.1
+    hooks:
+      - id: cfn-lint-rc
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.19.2
+    hooks:
+      - id: check-github-workflows
