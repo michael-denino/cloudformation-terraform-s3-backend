@@ -1,16 +1,27 @@
-# cloudformation-terraform-s3-backend
+# CloudFormation Terraform S3 Backend
 AWS CloudFormation template to create the S3 and DynamoDB resources needed for a Terraform S3 backend.
 
 ## Table of Contents
+- [Prerequisites](#prerequisites)
 - [Deployment](#deployment)
 - [Testing](#testing)
 - [Validation](#validation)
 - [Resources](#resources)
 
-## Deployment
-Open a terminal session and configure the AWS CLI with credentials capable of deploying the `tf-s3-backend.yaml` CloudFormation stack.
+## Prerequisites
+```zsh
+brew install \
+awscli
+terraform
+```
+Configure the AWS CLI with credentials capable of creating a CloudFormation stack, S3 bucket, and DynamoDB table.
 
-Run `./scripts/cfn.sh create-stack` to deploy the CloudFormation stack. Alternatively, the CloudFormation stack can be deployed via the AWS console or integrated into a CI/CD pipeline. A stack set can be used for multi-account deployments. `.cfn.sh` can execute a limited number of `aws cloudformation` commands. Run `./scripts/cfn.sh --help` for a list of available commands. Use the AWS CLI directly to run commands not supported by `.cfn.sh`, such as change set and wait commands.
+## Deployment
+To deploy the Terraform S3 backend using CloudFormation, run `./scripts/cfn.sh create-stack`. `.cfn.sh` will create a CloudFormation stack called `terraform-backend` using the `tf-s3-backend.yaml` template with default parameter values. `.cfn.sh` is designed to aid development and has limited functionality. The script uses generic parameters and a stack level `Name` tag. The `tf-s3-backend.yaml` CloudFormation template appends the AWS account number when forming the S3 bucket and DynamoDB table names. Customize the script and add additional stack level tags as needed.
+
+Run `./scripts/cfn.sh --help` for a list of available commands. Use the AWS CLI directly to run commands not supported by `.cfn.sh`, such as change set and wait commands.
+
+Alternatively, the CloudFormation stack can be deployed via the AWS console or integrated into a CI/CD pipeline. A stack set can be used for multi-account deployments.
 
 The S3 bucket must be empty (including versioned objects) before deleting the CloudFormation stack.
 
@@ -36,9 +47,9 @@ If you ever set or change modules or backend configuration for Terraform,
 rerun this command to reinitialize your working directory. If you forget, other
 commands will detect it and remind you to do so if necessary.
 ```
-The `-reconfigure` flag may be necessary if `terraform init` ran previously with a different backend configuration and the `.terraform` directory still includes the old configuration. Or, simply delete the outdated test configuration.
+The `-reconfigure` flag may be necessary if `terraform init` ran previously with a different backend configuration and the `.terraform` directory still includes the old configuration. Or simply delete the outdated test configuration.
 
-Run `terraform apply` and type `yes` to create the `timestamp()` output. For example:
+Run `terraform apply` and type `yes` to approve the changes and create the `timestamp()` output. For example:
 ```zsh
 $ terraform apply
 
@@ -64,12 +75,12 @@ current_time = "2023-03-01T02:55:35Z"
 ## Validation
 Run `aws s3 ls <bucket-name>` to verify the state file exists in the S3 bucket. For example:
 ```zsh
-$ aws s3 ls <bucket>
+$ aws s3 ls <bucket-name>
 2023-02-28 21:57:19        273 backend-test.tfstate
 ```
-To verify the state lock funtionality, run `terraform apply` and let the process hang on the approval step. Run `aws dynamodb scan --table-name <dynamodb-table-name>` from a second terminal session to return the items in the table. The table scan output should incldue a lock item with the `Info` attrubute. The presense of this item indicates that the state is locked and prevents other `terraform` processes from updating the statefile.
+To verify the state lock funtionality, run `terraform apply` and allow the process hang on the approval step. Run `aws dynamodb scan --table-name <dynamodb-table-name>` from a second terminal session to return the items in the table. The table scan output should include a lock item with the `Info` attribute. The presence of this item indicates that the state is locked and prevents other `terraform` processes from updating the state file.
 
-Terraform will delete the lock item containing the `Info` attribute to unlock the state  when the `terraform` process that created it completes. After the initial state file creation, Terraform will also maintain a peristent item with an md5 hash digest of the state file. The DynamoDB table scan output should be similar to the following:
+Terraform will delete the lock item containing the `Info` attribute to unlock the state when the `terraform` process that created it completes. After the initial state file creation, Terraform will also maintain a persistent item with an md5 hash digest of the state file. The DynamoDB table scan output should be similar to the following:
 ```zsh
 $ aws dynamodb scan --table-name <dynamodb-table-name>
 {
@@ -96,7 +107,7 @@ $ aws dynamodb scan --table-name <dynamodb-table-name>
     "ConsumedCapacity": null
 }
 ```
-Another method of verifying state lock is to run `terraform plan` or `apply` from a second terminal session while the first `terraform apply` is pending approval. Or, have a second user run `terraform plan` or `apply`. When trying to run a `plan` or `apply` on a backend that is locked, Terraform will produce an error message similar to the following:
+Another method of verifying state lock is to run `terraform plan` or `apply` from a second terminal session while the first `terraform apply` is pending approval. Or have a second user run `terraform plan` or `apply`. When trying to run a `plan` or `apply` on a backend that is locked, Terraform will produce the following error message:
 ```zsh
 $ terraform apply
 ╷
