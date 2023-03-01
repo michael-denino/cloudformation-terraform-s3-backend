@@ -24,7 +24,7 @@ Resources:
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
-      BucketName: !Join [ -, [ !Ref StateBucketName, !Ref AWS::AccountId ] ]
+      BucketName: !Join [ '-', [ !Ref StateBucketName, !Ref AWS::AccountId ] ]
       AccessControl: Private
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
@@ -64,7 +64,7 @@ Resources:
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
-      TableName: !Join [ -, [ !Ref LockTableName, !Ref AWS::AccountId ] ]
+      TableName: !Join [ '-', [ !Ref LockTableName, !Ref AWS::AccountId ] ]
       AttributeDefinitions:
         - AttributeName: LockID
           AttributeType: S
