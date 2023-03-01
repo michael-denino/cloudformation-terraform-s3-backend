@@ -1,0 +1,87 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Creates an S3 bucket and DynamoDB table to use as a Terraform S3 backend.
+
+Parameters:
+  StateBucketName:
+    Description: Name of S3 bucket used to store Terraform State files (account ID appended to name).
+    Type: String
+    Default: terraform-state
+  LockTableName:
+    Description: Name of the DynamoDB table used for Terraform state locking (account ID appended to name).
+    Type: String
+    Default: terraform-lock
+  KMSMasterKeyID:
+    Description: ARN of the KMS key to use for default encryption (use default value for AWS managerd key).
+    Type: String
+    Default: AWS managed key
+
+Conditions:
+  UseAWSManagedKey: !Equals [ !Ref KMSMasterKeyID, AWS managed key ]
+
+Resources:
+  StateBucket:
+    Type: "AWS::S3::Bucket"
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      BucketName: !Join [ '-', [ !Ref StateBucketName, !Ref AWS::AccountId ] ]
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+              KMSMasterKeyID: !If [ UseAWSManagedKey, !Ref AWS::NoValue, !Ref KMSMasterKeyID ]
+      VersioningConfiguration:
+        Status: Enabled
+
+  BucketPolicy:
+     Type: AWS::S3::BucketPolicy
+     Properties:
+       Bucket: !Ref StateBucket
+       PolicyDocument:
+         Version: '2012-10-17'
+         Statement:
+           - Sid: AllowTLSRequestsOnly
+             Principal: '*'
+             Action: 's3:*'
+             Effect: Deny
+             Resource:
+               - !GetAtt [ StateBucket, Arn ]
+               - !Sub [ '${BucketArn}/*', BucketArn: !GetAtt [ StateBucket, Arn ] ]
+             Condition:
+               Bool:
+                 'aws:SecureTransport': 'false'
+               NumericLessThan:
+                 's3:TlsVersion': 1.2
+
+  LockTable:
+    Type: "AWS::DynamoDB::Table"
+    DeletionPolicy: Delete
+    UpdateReplacePolicy: Delete
+    Properties:
+      TableName: !Join [ '-', [ !Ref LockTableName, !Ref AWS::AccountId ] ]
+      AttributeDefinitions:
+        - AttributeName: LockID
+          AttributeType: S
+      KeySchema:
+        - AttributeName: LockID
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      SSESpecification:
+        SSEEnabled: true
+
+Outputs:
+  Bucket:
+    Value: !Ref StateBucket
+    Description: S3 bucket name
+  DynamodbTable:
+    Value: !Ref LockTable
+    Description: DynamoDB table name
+  Region:
+    Value: !Ref AWS::Region
+    Description: AWS Region

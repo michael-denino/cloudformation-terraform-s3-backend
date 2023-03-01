@@ -1,0 +1,2 @@
+templates:
+  - tf-s3-backend.yaml
