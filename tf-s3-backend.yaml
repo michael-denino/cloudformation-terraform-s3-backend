@@ -76,9 +76,12 @@ Resources:
         SSEEnabled: true
 
 Outputs:
-  S3BucketName:
+  Bucket:
     Value: !Ref StateBucket
     Description: S3 bucket name
-  DynamoDBTableName:
+  DynamodbTable:
     Value: !Ref LockTable
     Description: DynamoDB table name
+  Region:
+    Value: !Ref AWS::Region
+    Description: AWS Region

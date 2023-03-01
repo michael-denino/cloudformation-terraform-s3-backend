@@ -17,7 +17,7 @@ case $COMMAND in
     # Stack-level tags are applied to all supported resources in the CloudFormation stack
     aws cloudformation $COMMAND \
       --stack-name $STACK_NAME \
-      --template-body file://../tf-s3-backend.yaml \
+      --template-body file://$(dirname $0)/../tf-s3-backend.yaml \
       --tags Key=Name,Value=$STACK_NAME
   ;;
 esac
