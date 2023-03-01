@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-set -o nounset
 set -o errexit
 
 # pass the cloudformation command as an arguemnt (e.g create-stack, update-stack, delete-stack, etc.)
@@ -34,7 +33,7 @@ cloudformation () {
       list_valid_arguments
     ;;
     *)
-      echo -e "This scrript does not support the '${COMMAND}' command\nUse --help to list available commands"
+      echo -e "Invalid argument: '${COMMAND}'\nUse --help to list available commands"
       exit 1
     ;;
   esac
