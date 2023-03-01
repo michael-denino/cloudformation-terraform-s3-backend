@@ -7,17 +7,37 @@ set -o errexit
 # i.e. $ ./stack.sh create-stack
 COMMAND=$1
 STACK_NAME=terraform-backend
+VALID_ARGUMENTS=("create-stack" "delete-stacks" "describe-stacks" "describe-stack-events" "update-stack")
 
-case $COMMAND in
-  "delete-stack" | "describe-stacks")
-    aws cloudformation $COMMAND \
-      --stack-name $STACK_NAME
+list_valid_arguments () {
+  for argument in ${VALID_ARGUMENTS[@]}
+  do
+    echo ${argument}
+  done
+}
+
+cloudformation () {
+  case $COMMAND in
+    "create-stack" | "update-stack")
+      # Stack-level tags are applied to all supported resources in the CloudFormation stack
+      aws cloudformation $COMMAND \
+        --stack-name $STACK_NAME \
+        --template-body file://$(dirname $0)/../tf-s3-backend.yaml \
+        --tags Key=Name,Value=$STACK_NAME
+      ;;
+    "describe-stacks" | "delete-stack" | "describe-stack-events")
+      aws cloudformation $COMMAND \
+        --stack-name $STACK_NAME
     ;;
-  *)
-    # Stack-level tags are applied to all supported resources in the CloudFormation stack
-    aws cloudformation $COMMAND \
-      --stack-name $STACK_NAME \
-      --template-body file://$(dirname $0)/../tf-s3-backend.yaml \
-      --tags Key=Name,Value=$STACK_NAME
-  ;;
-esac
+    "help" | "--help")
+      echo -e "Commands:\n"
+      list_valid_arguments
+    ;;
+    *)
+      echo -e "This scrript does not support the '${COMMAND}' command\nUse --help to list available commands"
+      exit 1
+    ;;
+  esac
+}
+
+cloudformation
