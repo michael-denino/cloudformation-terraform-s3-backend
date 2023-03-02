@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: 2010-09-09
 Description: Creates an S3 bucket and DynamoDB table to use as a Terraform S3 backend.
 
 Parameters:
@@ -20,7 +20,7 @@ Conditions:
 
 Resources:
   StateBucket:
-    Type: "AWS::S3::Bucket"
+    Type: AWS::S3::Bucket
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
@@ -44,7 +44,7 @@ Resources:
      Properties:
        Bucket: !Ref StateBucket
        PolicyDocument:
-         Version: '2012-10-17'
+         Version: 2012-10-17
          Statement:
            - Sid: AllowTLSRequestsOnly
              Principal: '*'
@@ -55,12 +55,12 @@ Resources:
                - !Sub [ '${BucketArn}/*', BucketArn: !GetAtt [ StateBucket, Arn ] ]
              Condition:
                Bool:
-                 'aws:SecureTransport': 'false'
+                 aws:SecureTransport : false
                NumericLessThan:
-                 's3:TlsVersion': 1.2
+                 s3:TlsVersion: 1.2
 
   LockTable:
-    Type: "AWS::DynamoDB::Table"
+    Type: AWS::DynamoDB::Table
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
