@@ -11,7 +11,7 @@ AWS CloudFormation template to create the S3 and DynamoDB resources needed for a
 ## Prerequisites
 ```zsh
 brew install \
-awscli
+awscli \
 terraform
 ```
 Configure the AWS CLI with credentials capable of creating a CloudFormation stack, S3 bucket, and DynamoDB table. Set the desired AWS region.

@@ -9,5 +9,6 @@ terraform {
 }
 
 output "current_time" {
-  value = timestamp()
+  description = "Timestamp represented in RFC 3339 date and time format."
+  value       = timestamp()
 }

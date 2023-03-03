@@ -27,15 +27,15 @@ cloudformation () {
     "describe-stacks" | "delete-stack" | "describe-stack-events")
       aws cloudformation $COMMAND \
         --stack-name $STACK_NAME
-    ;;
+      ;;
     "help" | "--help")
       echo -e "Commands:\n"
       list_valid_arguments
-    ;;
+      ;;
     *)
       echo -e "Invalid argument: '${COMMAND}'\nUse --help to list available commands"
       exit 1
-    ;;
+      ;;
   esac
 }
 

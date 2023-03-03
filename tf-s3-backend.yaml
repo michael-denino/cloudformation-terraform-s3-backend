@@ -1,9 +1,9 @@
-AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: 2010-09-09
 Description: Creates an S3 bucket and DynamoDB table to use as a Terraform S3 backend.
 
 Parameters:
   StateBucketName:
-    Description: Name of S3 bucket used to store Terraform State files (account ID appended to name).
+    Description: Name of S3 bucket used to store Terraform state files (account ID appended to name).
     Type: String
     Default: terraform-state
   LockTableName:
@@ -11,7 +11,7 @@ Parameters:
     Type: String
     Default: terraform-lock
   KMSMasterKeyID:
-    Description: ARN of the KMS key to use for default encryption (use default value for AWS managerd key).
+    Description: ARN of the KMS key to use for default encryption (use default value for AWS managed key).
     Type: String
     Default: AWS managed key
 
@@ -20,7 +20,7 @@ Conditions:
 
 Resources:
   StateBucket:
-    Type: "AWS::S3::Bucket"
+    Type: AWS::S3::Bucket
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
@@ -44,7 +44,7 @@ Resources:
      Properties:
        Bucket: !Ref StateBucket
        PolicyDocument:
-         Version: '2012-10-17'
+         Version: 2012-10-17
          Statement:
            - Sid: AllowTLSRequestsOnly
              Principal: '*'
@@ -55,12 +55,12 @@ Resources:
                - !Sub [ '${BucketArn}/*', BucketArn: !GetAtt [ StateBucket, Arn ] ]
              Condition:
                Bool:
-                 'aws:SecureTransport': 'false'
+                 aws:SecureTransport : false
                NumericLessThan:
-                 's3:TlsVersion': 1.2
+                 s3:TlsVersion: 1.2
 
   LockTable:
-    Type: "AWS::DynamoDB::Table"
+    Type: AWS::DynamoDB::Table
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
