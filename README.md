@@ -9,10 +9,15 @@ AWS CloudFormation template to create the S3 and DynamoDB resources needed for a
 - [Resources](#resources)
 
 ## Prerequisites
+- awscli
+- terraform
+
+Install using Homebrew:
 ```zsh
+brew tap hashicorp/tap
 brew install \
 awscli \
-terraform
+hashicorp/tap/terraform
 ```
 Configure the AWS CLI with credentials capable of creating a CloudFormation stack, S3 bucket, and DynamoDB table. Set the desired AWS region.
 
@@ -151,3 +156,4 @@ $ terraform apply
 ## Resources
 - [Terraform S3 Backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3)
 - [AWS CLI CloudFormaton](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/index.html)
+- []
