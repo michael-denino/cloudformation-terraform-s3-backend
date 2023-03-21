@@ -2,11 +2,29 @@
 AWS CloudFormation template to create the S3 and DynamoDB resources needed for a Terraform S3 backend.
 
 ## Table of Contents
+- [Overview](#overview)
+  - [S3](#s3)
+  - [DynamoDB](#dynamodb)
 - [Prerequisites](#prerequisites)
 - [Deployment](#deployment)
 - [Testing](#testing)
 - [Validation](#validation)
 - [Resources](#resources)
+
+## Overview
+This repository contains a CloudFormation template (`tf-s3-backend.yaml`) that creates the S3 and DynamoDB resources needed for a [Terraform S3 Backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3). The S3 bucket provides state storage and the DynamoDB table provides state lock functionality. State lock prevents multiple users/workflows from reading or updating the state file simultaneously. A single backend can host multiple Terraform root modules and workspaces if the backend configuration keys are unique.
+
+A deployment script and Terraform test module are included in this repository, along with a pre-commit configuration and semantic-release GitHub Actions workflow. Additional information is provided in the [Deployment](#deployment) section of this documentation.
+
+Cross region replication and access logging may be added as optional features in the future.
+
+### S3
+The S3 bucket has versioning enabled, blocks public access, and uses AWS managed KMS encryption by default. A customer managed KMS key can be used by passing a KMS key ARN to the `KMSMasterKeyID` input parameter. An S3 bucket policy is attached to the bucket denying connections that do not use TLS version 1.2 or greater. This prevents transmitting or receiving bucket objects over an insecure network connection.
+
+The CloudFormation template appends the AWS account ID to the bucket name. This increases the chance of forming a globally unique bucket name when using the default template parameters. Appending the account ID to the S3 bucket name also identifies the location of the S3 backend in the Terraform backend configuration. The default name for the S3 bucket is `terraform-state-<AWS_ACCOUNT_ID>`. The `terraform-state` prefix can be overridden by using the `StateBucketName` input parameter.
+
+### DynamoDB
+The DynamoDB table uses the `LockID` partition key specified in the Terraform [DynamoDB State Locking](https://developer.hashicorp.com/terraform/language/settings/backends/s3#dynamodb-state-locking) documentation and has server-side encryption enabled by default. The DynamoDB table is configured with `PAY_PER_REQUEST` billing mode to avoid the minimum monthly cost associated with `PROVISIONED` billing mode. The default name for the DynamoDB table is `terraform-lock-<AWS_ACCOUNT_ID>`. The `terraform-lock` prefix can be overridden by using the `LockTableName` input parameter.
 
 ## Prerequisites
 - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
@@ -101,7 +119,7 @@ $ aws s3 cp s3://<bucket-name>/backend-test.tfstate -
   "check_results": null
 }
 ```
-To verify state lock funtionality, run `terraform apply` and allow the process hang on the approval step. Run `aws dynamodb scan --table-name <dynamodb-table-name>` from a second terminal session to return the items in the table. The table scan output should include a lock item with the `Info` attribute. The presence of this item indicates that the state is locked and prevents other `terraform` processes from updating the state file.
+To verify state lock functionality, run `terraform apply` and allow the process hang on the approval step. Run `aws dynamodb scan --table-name <dynamodb-table-name>` from a second terminal session to return the items in the table. The table scan output should include a lock item with the `Info` attribute. The presence of this item indicates that the state is locked and prevents other `terraform` processes from updating the state file.
 
 Terraform will delete the lock item containing the `Info` attribute to unlock the state when the `terraform` process that created it completes. After the initial state file creation, Terraform will also maintain a persistent item with an md5 hash digest of the state file. The DynamoDB table scan output should be similar to the following:
 ```zsh
