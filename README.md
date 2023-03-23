@@ -5,6 +5,7 @@ AWS CloudFormation template to create the S3 and DynamoDB resources needed for a
 - [Overview](#overview)
   - [S3](#s3)
   - [DynamoDB](#dynamodb)
+  - [Portability](#portability)
 - [Prerequisites](#prerequisites)
 - [Deployment](#deployment)
 - [Testing](#testing)
@@ -21,10 +22,13 @@ Cross region replication and access logging may be added as optional features in
 ### S3
 The S3 bucket has versioning enabled, blocks public access, and uses AWS managed KMS encryption by default. A customer managed KMS key can be used by passing a KMS key ARN to the `KMSMasterKeyID` input parameter. An S3 bucket policy is attached to the bucket denying connections that do not use TLS version 1.2 or greater. This prevents transmitting or receiving bucket objects over an insecure network connection.
 
-The CloudFormation template appends the AWS account ID to the bucket name. This increases the chance of forming a globally unique bucket name when using the default template parameters. Appending the account ID to the S3 bucket name also identifies the location of the S3 backend in the Terraform backend configuration. The default name for the S3 bucket is `terraform-state-<AWS_ACCOUNT_ID>`. The `terraform-state` prefix can be overridden by using the `StateBucketName` input parameter.
+The CloudFormation template appends the AWS account ID to the bucket name. Appending the account ID to the bucket name increases the chance of forming a globally unique bucket name. Appending the account ID to the S3 bucket name also identifies the location of the S3 backend when referencing the bucket in the Terraform backend configuration. The default name for the S3 bucket is `terraform-state-<aws-account-id>`. The `terraform-state` prefix can be overridden by using the `StateBucketName` input parameter.
 
 ### DynamoDB
-The DynamoDB table uses the `LockID` partition key specified in the Terraform [DynamoDB State Locking](https://developer.hashicorp.com/terraform/language/settings/backends/s3#dynamodb-state-locking) documentation and has server-side encryption enabled by default. The DynamoDB table is configured with `PAY_PER_REQUEST` billing mode to avoid the minimum monthly cost associated with `PROVISIONED` billing mode. The default name for the DynamoDB table is `terraform-lock-<AWS_ACCOUNT_ID>`. The `terraform-lock` prefix can be overridden by using the `LockTableName` input parameter.
+The DynamoDB table uses the `LockID` partition key specified in the Terraform [DynamoDB State Locking](https://developer.hashicorp.com/terraform/language/settings/backends/s3#dynamodb-state-locking) documentation and has server-side encryption enabled by default. The DynamoDB table is configured with `PAY_PER_REQUEST` billing mode to avoid the minimum monthly cost associated with `PROVISIONED` billing mode. The default name for the DynamoDB table is `terraform-lock-<aws-account-id>`. The `terraform-lock` prefix can be overridden by using the `LockTableName` input parameter.
+
+### Portability
+The CloudFormation template uses dynamically formed ARNs and does not include hard coded ARN prefixes. Using dynamically formed ARNs allows the template to function properly across AWS partitions, such as AWS GovCloud (US) and the standard AWS partition.
 
 ## Prerequisites
 - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
@@ -174,3 +178,5 @@ $ terraform apply
 ## Resources
 - [Terraform S3 Backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3)
 - [AWS CLI CloudFormaton](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/index.html)
+- [Bucket Naming Rules](https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html)
+- [DynamoDB Naming Rules](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.NamingRulesDataTypes.html)
