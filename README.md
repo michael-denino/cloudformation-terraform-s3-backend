@@ -22,10 +22,10 @@ Cross region replication and access logging may be added as optional features in
 ### S3
 The S3 bucket has versioning enabled, blocks public access, and uses AWS managed KMS encryption by default. A customer managed KMS key can be used by passing a KMS key ARN to the `KMSMasterKeyID` input parameter. An S3 bucket policy is attached to the bucket denying connections that do not use TLS version 1.2 or greater. This prevents transmitting or receiving bucket objects over an insecure network connection.
 
-The CloudFormation template appends the AWS account ID to the bucket name. Appending the account ID to the bucket name increases the chance of forming a globally unique bucket name. Appending the account ID to the S3 bucket name also identifies the location of the S3 backend when referencing the bucket in the Terraform backend configuration. The default name for the S3 bucket is `terraform-state-<aws-account-id>`. The `terraform-state` prefix can be overridden by using the `StateBucketName` input parameter.
+The CloudFormation template appends the AWS account ID to the bucket name. Appending the account ID to the bucket name increases the chance of forming a globally unique bucket name. Appending the account ID to the S3 bucket name also identifies the location of the S3 backend when referencing the bucket in the Terraform backend configuration. The default name for the S3 bucket is `terraform-state-<aws-account-id>`. The `terraform-state` prefix can be overridden using the `StateBucketName` input parameter.
 
 ### DynamoDB
-The DynamoDB table uses the `LockID` partition key specified in the Terraform [DynamoDB State Locking](https://developer.hashicorp.com/terraform/language/settings/backends/s3#dynamodb-state-locking) documentation and has server-side encryption enabled by default. The DynamoDB table is configured with `PAY_PER_REQUEST` billing mode to avoid the minimum monthly cost associated with `PROVISIONED` billing mode. The default name for the DynamoDB table is `terraform-lock-<aws-account-id>`. The `terraform-lock` prefix can be overridden by using the `LockTableName` input parameter.
+The DynamoDB table uses the `LockID` partition key specified in the Terraform [DynamoDB State Locking](https://developer.hashicorp.com/terraform/language/settings/backends/s3#dynamodb-state-locking) documentation and has server-side encryption enabled by default. The DynamoDB table is configured with `PAY_PER_REQUEST` billing mode to avoid the minimum monthly cost associated with `PROVISIONED` billing mode. The default name for the DynamoDB table is `terraform-lock-<aws-account-id>`. The `terraform-lock` prefix can be overridden using the `LockTableName` input parameter.
 
 ### Portability
 The CloudFormation template uses dynamically formed ARNs and does not include hard coded ARN prefixes. Using dynamically formed ARNs allows the template to function properly across AWS partitions, such as AWS GovCloud (US) and the standard AWS partition.
@@ -44,17 +44,20 @@ hashicorp/tap/terraform
 Configure the AWS CLI with credentials capable of creating a CloudFormation stack, S3 bucket, and DynamoDB table. Set the desired AWS region.
 
 ## Deployment
-To deploy the Terraform S3 backend using CloudFormation, run `./scripts/cfn.sh create-stack`. `.cfn.sh` will create a CloudFormation stack called `terraform-backend` using the `tf-s3-backend.yaml` template with default parameter values. `.cfn.sh` is designed to aid development and has limited functionality. The script uses generic parameters and a stack level `Name` tag. The `tf-s3-backend.yaml` CloudFormation template appends the AWS account number when forming the S3 bucket and DynamoDB table names. Customize the script and add additional stack level tags as needed.
+To deploy the Terraform S3 backend using CloudFormation, run `./scripts/cfn.sh create-stack`. `cfn.sh` will create a CloudFormation stack called `terraform-backend` using the `tf-s3-backend.yaml` template with default parameter values. `cfn.sh` is designed to aid development and has limited functionality. The script uses generic parameters and a stack level `Name` tag. The `tf-s3-backend.yaml` CloudFormation template appends the AWS account number when forming the S3 bucket and DynamoDB table names. Customize the script and add additional stack level tags as needed.
 
-Run `./scripts/cfn.sh --help` for a list of available commands. Use the AWS CLI directly to run commands not supported by `.cfn.sh`, such as change set and wait commands.
+Run `./scripts/cfn.sh --help` for a list of available commands. Use the AWS CLI directly to run commands not supported by `cfn.sh`, such as change set and wait commands.
 
 Alternatively, the CloudFormation stack can be deployed via the AWS console or integrated into a CI/CD pipeline. A stack set can be used for multi-account deployments.
 
 The S3 bucket must be empty (including versioned objects) before deleting the CloudFormation stack.
 
 ## Testing
-To test the Terraform backend, insert the appropriate backend values into `./test/main.tf`. The values required to configure the Terraform S3 Backend are set as outputs of the CloudFormation stack. After adding the appropriate backend values, run `terraform init` from the `./test` directory to initialize the backend. For example:
+To test the Terraform backend, insert the appropriate backend values into `./test/main.tf`. The values required to configure the Terraform S3 Backend are set as outputs of the CloudFormation stack. If `cfn.sh` was used to deploy the stack, run `./scripts/cfn.sh describe-stacks` to view stack outputs. Stack outputs are also visible in the AWS console or by using the AWS CLI directly.
+
+After modifying `./test/main.tf` with the appropriate Terraform backend values, run `terraform init` from the `./test` directory to initialize the backend. For example:
 ```zsh
+$ cd ./test
 $ terraform init
 
 Initializing the backend...
@@ -132,10 +135,10 @@ $ aws dynamodb scan --table-name <dynamodb-table-name>
     "Items": [
         {
             "LockID": {
-                "S": "terraform-state-982542462374/backend-test.tfstate"
+                "S": "<bucket-name>/backend-test.tfstate"
             },
             "Info": {
-                "S": "{\"ID\":\"8ed32e61-d3b0-45f6-8e54-4874151d1421\",\"Operation\":\"OperationTypeApply\",\"Info\":\"\",\"Who\":\"<username>@<hostname>\",\"Version\":\"1.3.9\",\"Created\":\"2023-03-01T03:43:55.862597Z\",\"Path\":\"terraform-state-982542462374/backend-test.tfstate\"}"
+                "S": "{\"ID\":\"8ed32e61-d3b0-45f6-8e54-4874151d1421\",\"Operation\":\"OperationTypeApply\",\"Info\":\"\",\"Who\":\"<username>@<hostname>\",\"Version\":\"1.3.9\",\"Created\":\"2023-03-01T03:43:55.862597Z\",\"Path\":\"<bucket-name>/backend-test.tfstate\"}"
             }
         },
         {
@@ -143,7 +146,7 @@ $ aws dynamodb scan --table-name <dynamodb-table-name>
                 "S": "b72fe49326d8f111c94566d53c2ef176"
             },
             "LockID": {
-                "S": "terraform-state-982542462374/backend-test.tfstate-md5"
+                "S": "<bucket-name>/backend-test.tfstate-md5"
             }
         }
     ],
@@ -161,12 +164,12 @@ $ terraform apply
 │ Error message: ConditionalCheckFailedException: The conditional request failed
 │ Lock Info:
 │   ID:        8ed32e61-d3b0-45f6-8e54-4874151d1421
-│   Path:      terraform-state-982542462374/backend-test.tfstate
+│   Path:      <bucket-name>/backend-test.tfstate
 │   Operation: OperationTypeApply
 │   Who:       <username>@<hostname>
 │   Version:   1.3.9
 │   Created:   2023-03-01 03:43:55.862597 +0000 UTC
-│   Info:  
+│   Info:
 │
 │
 │ Terraform acquires a state lock to protect the state from being written
@@ -178,5 +181,5 @@ $ terraform apply
 ## Resources
 - [Terraform S3 Backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3)
 - [AWS CLI CloudFormaton](https://docs.aws.amazon.com/cli/latest/reference/cloudformation/index.html)
-- [Bucket Naming Rules](https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html)
+- [S3 Bucket Naming Rules](https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html)
 - [DynamoDB Naming Rules](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.NamingRulesDataTypes.html)
