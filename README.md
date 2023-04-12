@@ -17,15 +17,19 @@ This repository contains a CloudFormation template (`tf-s3-backend.yaml`) that c
 
 A deployment script and Terraform test module are included in this repository, along with a pre-commit configuration and semantic-release GitHub Actions workflow. Additional information is provided in the [Deployment](#deployment) section of this documentation.
 
+The CloudFormation template appends the AWS account ID to the bucket name and DynamoDB table name by default. Appending the account ID to resource names can be disabled by setting the `AppendAccountID` parameter to false. Appending the account ID to the bucket name increases the chance of forming a globally unique bucket name. Appending the account ID to the S3 bucket and DynamoDB table names also identifies the location of the S3 backend when referencing the bucket and table in the Terraform backend configuration.
+
 Cross region replication and access logging may be added as optional features in the future.
 
 ### S3
 The S3 bucket has versioning enabled, blocks public access, and uses AWS managed KMS encryption by default. A customer managed KMS key can be used by passing a KMS key ARN to the `KMSMasterKeyID` input parameter. An S3 bucket policy is attached to the bucket denying connections that do not use TLS version 1.2 or greater. This prevents transmitting or receiving bucket objects over an insecure network connection.
 
-The CloudFormation template appends the AWS account ID to the bucket name. Appending the account ID to the bucket name increases the chance of forming a globally unique bucket name. Appending the account ID to the S3 bucket name also identifies the location of the S3 backend when referencing the bucket in the Terraform backend configuration. The default name for the S3 bucket is `terraform-state-<aws-account-id>`. The `terraform-state` prefix can be overridden using the `StateBucketName` input parameter.
+The default name for the S3 bucket is `terraform-state-<aws-account-id>`. The `terraform-state` prefix can be overridden using the `StateBucketName` input parameter.
 
 ### DynamoDB
-The DynamoDB table uses the `LockID` partition key specified in the Terraform [DynamoDB State Locking](https://developer.hashicorp.com/terraform/language/settings/backends/s3#dynamodb-state-locking) documentation and has server-side encryption enabled by default. The DynamoDB table is configured with `PAY_PER_REQUEST` billing mode to avoid the minimum monthly cost associated with `PROVISIONED` billing mode. The default name for the DynamoDB table is `terraform-lock-<aws-account-id>`. The `terraform-lock` prefix can be overridden using the `LockTableName` input parameter.
+The DynamoDB table uses the `LockID` partition key specified in the Terraform [DynamoDB State Locking](https://developer.hashicorp.com/terraform/language/settings/backends/s3#dynamodb-state-locking) documentation and has server-side encryption enabled by default. The DynamoDB table is configured with `PAY_PER_REQUEST` billing mode to avoid the minimum monthly cost associated with `PROVISIONED` billing mode.
+
+The default name for the DynamoDB table is `terraform-lock-<aws-account-id>`. The `terraform-lock` prefix can be overridden using the `LockTableName` input parameter.
 
 ### Portability
 The CloudFormation template uses dynamically formed ARNs and does not include hard coded ARN prefixes. Using dynamically formed ARNs allows the template to function properly across AWS partitions, such as AWS GovCloud (US) and the standard AWS partition.
@@ -44,7 +48,7 @@ hashicorp/tap/terraform
 Configure the AWS CLI with credentials capable of creating a CloudFormation stack, S3 bucket, and DynamoDB table. Set the desired AWS region.
 
 ## Deployment
-To deploy the Terraform S3 backend using CloudFormation, run `./scripts/cfn.sh create-stack`. `cfn.sh` will create a CloudFormation stack called `terraform-backend` using the `tf-s3-backend.yaml` template with default parameter values. `cfn.sh` is designed to aid development and has limited functionality. The script uses generic parameters and a stack level `Name` tag. The `tf-s3-backend.yaml` CloudFormation template appends the AWS account number when forming the S3 bucket and DynamoDB table names. Customize the script and add additional stack level tags as needed.
+To deploy the Terraform S3 backend using CloudFormation, run `./scripts/cfn.sh create-stack`. `cfn.sh` will create a CloudFormation stack called `terraform-backend` using the `tf-s3-backend.yaml` template with default parameter values. `cfn.sh` is designed to aid development and has limited functionality. The script uses generic parameters and a stack level `Name` tag. The `tf-s3-backend.yaml` CloudFormation template appends the AWS account ID by default when forming the S3 bucket and DynamoDB table names. The `AppendAccountID` parameter can be used to disable appending the account ID. Customize the script and add additional stack level tags as needed.
 
 Run `./scripts/cfn.sh --help` for a list of available commands. Use the AWS CLI directly to run commands not supported by `cfn.sh`, such as change set and wait commands.
 
