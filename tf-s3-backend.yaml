@@ -14,9 +14,17 @@ Parameters:
     Description: ARN of the KMS key to use for default encryption (use default value for AWS managed key).
     Type: String
     Default: AWS managed key
+  AppendAccountID:
+    Description: Append the AWS account ID to resource names.
+    Type: String
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Default: 'true'
 
 Conditions:
   UseAWSManagedKey: !Equals [ !Ref KMSMasterKeyID, AWS managed key ]
+  AppendAccountID: !Equals [ !Ref AppendAccountID, 'true' ]
 
 Resources:
   StateBucket:
@@ -24,7 +32,7 @@ Resources:
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
-      BucketName: !Join [ '-', [ !Ref StateBucketName, !Ref AWS::AccountId ] ]
+      BucketName: !If [ AppendAccountID, !Join [ '-', [ !Ref StateBucketName, !Ref AWS::AccountId ] ], !Ref StateBucketName ]
       AccessControl: Private
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
@@ -64,7 +72,7 @@ Resources:
     DeletionPolicy: Delete
     UpdateReplacePolicy: Delete
     Properties:
-      TableName: !Join [ '-', [ !Ref LockTableName, !Ref AWS::AccountId ] ]
+      TableName: !If [ AppendAccountID, !Join [ '-', [ !Ref LockTableName, !Ref AWS::AccountId ] ], !Ref LockTableName ]
       AttributeDefinitions:
         - AttributeName: LockID
           AttributeType: S
