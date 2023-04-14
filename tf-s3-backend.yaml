@@ -3,19 +3,19 @@ Description: Creates an S3 bucket and DynamoDB table to use as a Terraform S3 ba
 
 Parameters:
   StateBucketName:
-    Description: Name of S3 bucket used to store Terraform state files (account ID appended to name).
+    Description: Name of the S3 bucket used to store Terraform state files.
     Type: String
     Default: terraform-state
   LockTableName:
-    Description: Name of the DynamoDB table used for Terraform state locking (account ID appended to name).
+    Description: Name of the DynamoDB table used for Terraform state locking.
     Type: String
     Default: terraform-lock
   KMSMasterKeyID:
-    Description: ARN of the KMS key to use for default encryption (use default value for AWS managed key).
+    Description: ARN of the KMS key used for default S3 object encryption (use default value for AWS managed key).
     Type: String
     Default: AWS managed key
   AppendAccountID:
-    Description: Append the AWS account ID to resource names.
+    Description: Append AWS account ID to resource names.
     Type: String
     AllowedValues:
       - 'true'

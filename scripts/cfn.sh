@@ -2,8 +2,8 @@
 
 set -o errexit
 
-# pass the cloudformation command as an arguemnt (e.g create-stack, update-stack, delete-stack, etc.)
-# i.e. $ ./stack.sh create-stack
+# Pass a CloudFormation command as an argument to this script (e.g create-stack, delete-stack, etc.)
+# Use --help for a list of available commands
 COMMAND=$1
 STACK_NAME=terraform-backend
 VALID_ARGUMENTS=("create-stack" "delete-stacks" "describe-stacks" "describe-stack-events" "update-stack")
