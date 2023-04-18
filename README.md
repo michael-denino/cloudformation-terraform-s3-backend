@@ -17,7 +17,7 @@ This repository contains a CloudFormation template (`tf-s3-backend.yaml`) that c
 
 A deployment script and Terraform test module are included in this repository, along with a pre-commit configuration and semantic-release GitHub Actions workflow. Additional information is provided in the [Deployment](#deployment) section of this documentation.
 
-The CloudFormation template appends the AWS account ID to the bucket name and DynamoDB table name by default. Appending the account ID to resource names can be disabled by setting the `AppendAccountID` parameter to false. Appending the account ID to the bucket name increases the chance of forming a globally unique bucket name. Appending the account ID to the S3 bucket and DynamoDB table names also identifies the location of the S3 backend when referencing the bucket and table in the Terraform backend configuration.
+The CloudFormation template appends the AWS account ID to the bucket name and DynamoDB table name by default. Appending the account ID to resource names can be disabled by setting the `AppendAccountID` parameter to `false`. Appending the account ID to the bucket name increases the chance of forming a globally unique bucket name. Appending the account ID to the S3 bucket and DynamoDB table names also identifies the location of the S3 backend when referencing the bucket and table in the Terraform backend configuration.
 
 Cross region replication and access logging may be added as optional features in the future.
 
@@ -48,11 +48,11 @@ hashicorp/tap/terraform
 Configure the AWS CLI with credentials capable of creating a CloudFormation stack, S3 bucket, and DynamoDB table. Set the desired AWS region.
 
 ## Deployment
-To deploy the Terraform S3 backend using CloudFormation, run `./scripts/cfn.sh create-stack`. `cfn.sh` will create a CloudFormation stack called `terraform-backend` using the `tf-s3-backend.yaml` template with default parameter values. `cfn.sh` is designed to aid development and has limited functionality. The script uses generic parameters and a stack level `Name` tag. The `tf-s3-backend.yaml` CloudFormation template appends the AWS account ID by default when forming the S3 bucket and DynamoDB table names. The `AppendAccountID` parameter can be used to disable appending the account ID. Customize the script and add additional stack level tags as needed.
+To deploy the Terraform S3 backend using CloudFormation, run `./scripts/cfn.sh create-stack`. `cfn.sh` will create a CloudFormation stack called `terraform-backend` using the `tf-s3-backend.yaml` template with default parameter values. `cfn.sh` is designed to aid development and has limited functionality. The script uses generic parameters and a stack level `Name` tag. Customize the script and add additional stack level tags as needed.
 
 Run `./scripts/cfn.sh --help` for a list of available commands. Use the AWS CLI directly to run commands not supported by `cfn.sh`, such as change set and wait commands.
 
-Alternatively, the CloudFormation stack can be deployed via the AWS console or integrated into a CI/CD pipeline. A stack set can be used for multi-account deployments.
+Alternatively, the CloudFormation stack can be deployed via the AWS console or integrated into a CI/CD pipeline. A [stack set](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/stacksets-concepts.html) can be used for multi-account deployments.
 
 The S3 bucket must be empty (including versioned objects) before deleting the CloudFormation stack.
 
@@ -60,7 +60,7 @@ The S3 bucket must be empty (including versioned objects) before deleting the Cl
 To test the Terraform backend, insert the appropriate backend values into `./test/main.tf`. The values required to configure the Terraform S3 Backend are set as outputs of the CloudFormation stack. If `cfn.sh` was used to deploy the stack, run `./scripts/cfn.sh describe-stacks` to view stack outputs. Stack outputs are also visible in the AWS console or by using the AWS CLI directly.
 
 After modifying `./test/main.tf` with the appropriate Terraform backend values, run `terraform init` from the `./test` directory to initialize the backend. For example:
-```zsh
+```console
 $ cd ./test
 $ terraform init
 
@@ -84,7 +84,7 @@ commands will detect it and remind you to do so if necessary.
 The `-reconfigure` flag may be necessary if `terraform init` ran previously with a different backend configuration and the `.terraform` directory still includes the old configuration. Or simply delete the outdated test configuration.
 
 Run `terraform apply` and type `yes` to approve the changes. Terraform will write the `current_time` output to the state file. For example:
-```zsh
+```console
 $ terraform apply
 
 Changes to Outputs:
@@ -108,12 +108,12 @@ current_time = "2023-03-01T02:55:35Z"
 
 ## Validation
 Run `aws s3 ls <bucket-name>` to verify the state file exists in the S3 bucket. For example:
-```zsh
+```console
 $ aws s3 ls <bucket-name>
 2023-02-28 21:57:19        273 backend-test.tfstate
 ```
 Run `aws s3 cp s3://<bucket-name>/backend-test.tfstate -` to view the contents of the state file. For example:
-```zsh
+```console
 $ aws s3 cp s3://<bucket-name>/backend-test.tfstate -
 {
   "version": 4,
@@ -133,7 +133,7 @@ $ aws s3 cp s3://<bucket-name>/backend-test.tfstate -
 To verify state lock functionality, run `terraform apply` and allow the process hang on the approval step. Run `aws dynamodb scan --table-name <dynamodb-table-name>` from a second terminal session to return the items in the table. The table scan output should include a lock item with the `Info` attribute. The presence of this item indicates that the state is locked and prevents other `terraform` processes from updating the state file.
 
 Terraform will delete the lock item containing the `Info` attribute to unlock the state when the `terraform` process that created it completes. After the initial state file creation, Terraform will also maintain a persistent item with an md5 hash digest of the state file. The DynamoDB table scan output should be similar to the following:
-```zsh
+```console
 $ aws dynamodb scan --table-name <dynamodb-table-name>
 {
     "Items": [
@@ -160,7 +160,7 @@ $ aws dynamodb scan --table-name <dynamodb-table-name>
 }
 ```
 Another method of verifying state lock is to run `terraform plan` or `apply` from a second terminal session while the first `terraform apply` is pending approval. Or have a second user run `terraform plan` or `apply`. When trying to run a `plan` or `apply` on a backend that is locked, Terraform will produce the following error message:
-```zsh
+```shell
 $ terraform apply
 ╷
 │ Error: Error acquiring the state lock
