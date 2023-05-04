@@ -15,7 +15,7 @@ AWS CloudFormation template to create the S3 and DynamoDB resources needed for a
 ## Overview
 This repository contains a CloudFormation template (`tf-s3-backend.yaml`) that creates the S3 and DynamoDB resources needed for a [Terraform S3 Backend](https://developer.hashicorp.com/terraform/language/settings/backends/s3). The S3 bucket provides state storage and the DynamoDB table provides state lock functionality. State lock prevents multiple users/workflows from reading or updating the state file simultaneously. A single backend can host multiple Terraform root modules and workspaces if the backend configuration keys are unique.
 
-A deployment script and Terraform test module are included in this repository, along with a pre-commit configuration and semantic-release GitHub Actions workflow. Additional information is provided in the [Deployment](#deployment) section of this documentation.
+A deployment script and Terraform test module are included in this repository, along with a pre-commit configuration, Dependabot configuration, and semantic-release GitHub Actions workflow. Additional information is provided in the [Deployment](#deployment) section of this documentation.
 
 The CloudFormation template appends the AWS account ID to the bucket name and DynamoDB table name by default. Appending the account ID to resource names can be disabled by setting the `AppendAccountID` parameter to `false`. Appending the account ID to the bucket name increases the chance of forming a globally unique bucket name. Appending the account ID to the S3 bucket and DynamoDB table names also identifies the location of the S3 backend when referencing the bucket and table in the Terraform backend configuration.
 
