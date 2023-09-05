@@ -6,7 +6,7 @@ set -o errexit
 # Use --help for a list of available commands
 COMMAND=$1
 STACK_NAME=terraform-backend
-VALID_ARGUMENTS=("create-stack" "delete-stacks" "describe-stacks" "describe-stack-events" "update-stack")
+VALID_ARGUMENTS=("create-stack" "delete-stack" "describe-stacks" "describe-stack-events" "update-stack")
 
 list_valid_arguments () {
   for argument in ${VALID_ARGUMENTS[@]}
