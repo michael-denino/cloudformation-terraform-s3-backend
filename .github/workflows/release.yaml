@@ -15,14 +15,14 @@ jobs:
       - name: Set Up Node
         uses: actions/setup-node@v3
         with:
-          node-version: "lts/*"
+          node-version: "18"
       - name: Install Dependencies
         run: |
-          npm install @semantic-release/commit-analyzer \
-                      @semantic-release/release-notes-generator \
-                      @semantic-release/github \
-                      conventional-changelog-eslint \
-                      semantic-release
+          npm install @semantic-release/commit-analyzer@10.0.4 \
+                      @semantic-release/release-notes-generator@11.0.7 \
+                      @semantic-release/github@9.0.4 \
+                      conventional-changelog-eslint@5.0.0 \
+                      semantic-release@21.1.1
       - name: Create Release
         run: |
           npx semantic-release -e ./.github/.releaserc.json
