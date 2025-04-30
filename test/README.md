@@ -6,7 +6,7 @@ To utilize this test module, update the backend configuration in `main.tf` with 
 ## Terraform Docs
 The following documentation was automatically generated using `terraform-docs`.
 
-<!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
@@ -34,4 +34,4 @@ No inputs.
 | Name | Description |
 |------|-------------|
 | <a name="output_current_time"></a> [current\_time](#output\_current\_time) | Timestamp represented in RFC 3339 date and time format. |
-<!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
+<!-- END_TF_DOCS -->

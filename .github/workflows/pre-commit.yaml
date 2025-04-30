@@ -11,17 +11,22 @@ on:
 jobs:
   pre-commit:
     name: pre-commit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
+      - name: Install Terraform
+        id: install-terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+            terraform_version: 1.11.4
       - name: Install TFLint
         id: install-tflint
         uses: terraform-linters/setup-tflint@v4
         with:
-          tflint_version: v0.44.1
+          tflint_version: v0.56.0
       - name: Install terraform-docs
         id: install-terraform-docs
         run: |
-          curl -Lo ./terraform-docs.tar.gz https://github.com/terraform-docs/terraform-docs/releases/download/v0.16.0/terraform-docs-v0.16.0-$(uname)-amd64.tar.gz
+          curl -Lo ./terraform-docs.tar.gz https://github.com/terraform-docs/terraform-docs/releases/download/v0.20.0/terraform-docs-v0.20.0-$(uname)-amd64.tar.gz
           tar -xzf terraform-docs.tar.gz
           chmod +x terraform-docs
           sudo mv terraform-docs /usr/local/bin/terraform-docs
