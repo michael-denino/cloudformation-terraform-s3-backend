@@ -33,7 +33,7 @@ jobs:
           terraform-docs --version
       - name: Checkout Repository
         id: checkout-repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Run pre-commit
         id: run-pre-commit
         uses: pre-commit/action@v3.0.1
